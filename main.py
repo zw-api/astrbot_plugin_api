@@ -69,6 +69,10 @@ class MyPlugin(Star):
         user_id = event.get_sender_id()
         message_str = event.message_str.strip()
         
+        # 过滤掉命令消息（以/开头的消息）
+        if message_str.startswith('/'):
+            return
+        
         logger.info(f"监听器触发 - 用户ID: {user_id}, 消息: {message_str}")
         
         # 检查用户是否在等待菜单选择
