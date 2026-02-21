@@ -69,8 +69,11 @@ class MyPlugin(Star):
         user_id = event.get_sender_id()
         message_str = event.message_str.strip()
         
+        logger.info(f"监听器触发 - 用户ID: {user_id}, 消息: {message_str}")
+        
         # 检查用户是否在等待菜单选择
         is_waiting = await self.get_kv_data(f"menu_waiting_{user_id}", False)
+        logger.info(f"等待状态: {is_waiting}")
         
         if not is_waiting:
             return
@@ -80,6 +83,7 @@ class MyPlugin(Star):
         for key, item in self.MENU_ITEMS.items():
             if message_str == key or message_str == item['name']:
                 selected_item = item
+                logger.info(f"匹配成功: {selected_item}")
                 break
         
         if selected_item:
@@ -100,6 +104,7 @@ class MyPlugin(Star):
             error_count = await self.get_kv_data(f"menu_error_count_{user_id}", 0)
             error_count += 1
             await self.put_kv_data(f"menu_error_count_{user_id}", error_count)
+            logger.info(f"错误计数: {error_count}")
             
             # 检查是否超过3次错误
             if error_count >= 3:
