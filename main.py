@@ -56,6 +56,9 @@ class MyPlugin(Star):
         # 设置用户状态为等待菜单选择
         await self.put_kv_data(f"menu_waiting_{user_id}", True)
         
+        # 初始化错误计数
+        await self.put_kv_data(f"menu_error_count_{user_id}", 0)
+        
         # 显示菜单
         yield event.plain_result(self.format_menu())
 
@@ -80,8 +83,9 @@ class MyPlugin(Star):
                 break
         
         if selected_item:
-            # 清除等待状态
+            # 清除等待状态和错误计数
             await self.delete_kv_data(f"menu_waiting_{user_id}")
+            await self.delete_kv_data(f"menu_error_count_{user_id}")
             
             # 执行对应功能
             handler_name = selected_item['handler']
@@ -92,8 +96,17 @@ class MyPlugin(Star):
                 for result in self.handle_test(event):
                     yield result
         else:
-            # 不匹配任何菜单项，提示用户
-            yield event.plain_result("请输入正确的选项编号或名称（如：1 或 demo）")
+            # 不匹配任何菜单项，静默增加错误计数
+            error_count = await self.get_kv_data(f"menu_error_count_{user_id}", 0)
+            error_count += 1
+            await self.put_kv_data(f"menu_error_count_{user_id}", error_count)
+            
+            # 检查是否超过3次错误
+            if error_count >= 3:
+                # 清除所有状态
+                await self.delete_kv_data(f"menu_waiting_{user_id}")
+                await self.delete_kv_data(f"menu_error_count_{user_id}")
+                yield event.plain_result("错误次数过多，已取消菜单选择。请重新输入 /作文菜单 来查看菜单。")
 
     def handle_demo(self, event: AstrMessageEvent):
         """处理demo功能"""
