@@ -69,10 +69,6 @@ class MyPlugin(Star):
         user_id = event.get_sender_id()
         message_str = event.message_str.strip()
         
-        # 过滤掉命令消息（以/开头的消息）
-        if message_str.startswith('/'):
-            return
-        
         logger.info(f"监听器触发 - 用户ID: {user_id}, 消息: {message_str}")
         
         # 检查用户是否在等待菜单选择
@@ -82,10 +78,32 @@ class MyPlugin(Star):
         if not is_waiting:
             return
         
+        # 跳过空消息
+        if not message_str:
+            return
+        
+        # 过滤掉命令本身（作文菜单）
+        if message_str == "作文菜单":
+            logger.info(f"跳过命令消息: {message_str}")
+            return
+        
         # 检查是否匹配菜单项（数字或名称）
         selected_item = None
+        
+        # 处理可能的命令格式（如 /1 或 /demo）
+        normalized_message = message_str
+        if normalized_message.startswith('/'):
+            normalized_message = normalized_message[1:]  # 去掉开头的 /
+        
         for key, item in self.MENU_ITEMS.items():
-            if message_str == key or message_str == item['name']:
+            logger.info(f"检查匹配 - key: '{key}', name: '{item['name']}', message: '{message_str}', normalized: '{normalized_message}'")
+            logger.info(f"  条件1: message_str == key: {message_str == key}")
+            logger.info(f"  条件2: message_str == item['name']: {message_str == item['name']}")
+            logger.info(f"  条件3: normalized_message == key: {normalized_message == key}")
+            logger.info(f"  条件4: normalized_message == item['name']: {normalized_message == item['name']}")
+            
+            if (message_str == key or message_str == item['name'] or 
+                normalized_message == key or normalized_message == item['name']):
                 selected_item = item
                 logger.info(f"匹配成功: {selected_item}")
                 break
